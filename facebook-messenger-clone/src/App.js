@@ -1,21 +1,46 @@
 import "./App.css";
 import React, { useEffect, useState } from "react";
 import { Button, FormControl, Input, InputLabel } from "@mui/material";
-import Message from "./Message";
+import Message from "./Message.js";
+import db from './firebase.js';
+import { onSnapshot, collection, query, serverTimestamp, addDoc } from "firebase/firestore";
 
 function App() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([{username:'Piyush', text:'Hello Guys'}, {username:'Akash', text:'Hey'}, {username:'Khushal', text:'Hola'}]);
+  const [messages, setMessages] = useState([{username:'Piyush', message:'Hello Guys'}, {username:'Akash', message:'Hey'}, {username:'Khushal', message:'Hola'}]);
   const [username, setUsername] = useState("");
 
   // useEffect: A react hook which allows us to run some code based on some condition
+
+  useEffect(()=>{
+    // const querySnapshot = getDocs(collection(db, "messages"));
+    // querySnapshot.forEach((doc) => {
+    //   // doc.data() is never undefined for query doc snapshots
+    //   console.log(doc.id, " => ", doc.data());
+    // });
+    const q = query(collection(db, "messages"))
+    onSnapshot(q, (querySnapshot) => {
+      const sorted = querySnapshot.docs
+      setMessages(querySnapshot.docs.map(doc => doc.data()));
+    });
+    // db.collection('messages').onSnapshot(snapshot => {
+    //   setMessages(snapshot.docs.map(doc=>doc.data()))
+    // })
+  }, [])
+
   useEffect(()=>{
     setUsername(prompt("Please enter your name:"))
   }, [])
 
   const sendMessage = (event) => {
     event.preventDefault();
-    setMessages([...messages, {username:username, text:input}]);
+    
+    addDoc(collection(db, 'messages'), {
+      username: username,
+      message: input,
+      timestamp: serverTimestamp()
+    })
+
     setInput("");
   };
 
@@ -41,7 +66,7 @@ function App() {
       </form>
 
       {messages.map((message) => (
-        <Message username={message.username} text={message.text} />
+        <Message username={username} message={message} />
       ))}
     </div>
   );
