@@ -4,28 +4,22 @@ import { Button, FormControl, Input, InputLabel } from "@mui/material";
 import Message from "./Message.js";
 import db from './firebase.js';
 import { onSnapshot, collection, query, serverTimestamp, addDoc } from "firebase/firestore";
+import FlipMove from 'react-flip-move';
 
 function App() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([{username:'Piyush', message:'Hello Guys'}, {username:'Akash', message:'Hey'}, {username:'Khushal', message:'Hola'}]);
+  const [messages, setMessages] = useState([]);
   const [username, setUsername] = useState("");
 
   // useEffect: A react hook which allows us to run some code based on some condition
 
   useEffect(()=>{
-    // const querySnapshot = getDocs(collection(db, "messages"));
-    // querySnapshot.forEach((doc) => {
-    //   // doc.data() is never undefined for query doc snapshots
-    //   console.log(doc.id, " => ", doc.data());
-    // });
     const q = query(collection(db, "messages"))
     onSnapshot(q, (querySnapshot) => {
-      const sorted = querySnapshot.docs
-      setMessages(querySnapshot.docs.map(doc => doc.data()));
+      let sorted_array = querySnapshot.docs.map(doc => ({id: doc.id, message: doc.data()}));
+      sorted_array = sorted_array.sort((a,b)=>b.message.timestamp-a.message.timestamp)
+      setMessages(sorted_array);
     });
-    // db.collection('messages').onSnapshot(snapshot => {
-    //   setMessages(snapshot.docs.map(doc=>doc.data()))
-    // })
   }, [])
 
   useEffect(()=>{
@@ -46,9 +40,10 @@ function App() {
 
   return (
     <div className="App">
+      {/* <img src="../public/messenger-logo-png.png" width={100} alt="Messenger Logo"/> */}
       <h1>Hello Everyone</h1>
       <h2>Welcome {username}</h2>
-      <form>
+      <form className="app__form">
         <FormControl>
           <InputLabel>Type your message....</InputLabel>
           <Input value={input} onChange={(event) => setInput(event.target.value)}/>
@@ -65,9 +60,11 @@ function App() {
         
       </form>
 
-      {messages.map((message) => (
-        <Message username={username} message={message} />
-      ))}
+      <FlipMove>
+        {messages.map(({id, message}) => (
+          <Message key={id} username={username} message={message} />
+        ))}
+      </FlipMove>
     </div>
   );
 }
